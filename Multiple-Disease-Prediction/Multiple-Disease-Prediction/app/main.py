@@ -2,14 +2,122 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import joblib
+import imblearn
 
 # model loading
-model1 = joblib.load("Multiple-Disease-Prediction/models/kidney.pkl")  
-model2 = joblib.load("Multiple-Disease-Prediction/models/liver_model.pkl") 
-model3 = joblib.load("Multiple-Disease-Prediction/models/parkinsons.pkl")  
+model1 = joblib.load("A:\Project\Multiple-Disease-Prediction\Multiple-Disease-Prediction\models\kidney.pkl")
+model2 = joblib.load("A:\Project\Multiple-Disease-Prediction\Multiple-Disease-Prediction\models\liver_model.pkl")
+model3 = joblib.load("A:\Project\Multiple-Disease-Prediction\Multiple-Disease-Prediction\models\parkinsons.pkl") 
 
 # --- Page Config ---
 st.set_page_config(page_title="Multiple Disease Prediction",page_icon="🏥")
+
+# --- Glassmorphism CSS + helper functions ---
+st.markdown(
+"""
+<style>
+/* Background gradient for subtle depth */
+html, body {background: linear-gradient(180deg, #d1d5db 0%, #9ca3af 100%); color: #0f172a;} 
+.glass {
+    background: rgba(255,255,255,0.85);
+    color: #0f172a;
+    backdrop-filter: blur(10px) saturate(130%);
+    -webkit-backdrop-filter: blur(10px) saturate(130%);
+    border-radius: 14px;
+    border: 1px solid rgba(191, 219, 254, 0.55);
+    box-shadow: 0 14px 40px rgba(15, 23, 42, 0.08);
+    padding: 16px;
+}
+.card-grid {display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 12px;}
+.tips-title {font-size:18px; font-weight:700; margin-bottom:6px; color: #0ea5e9;}
+.tips-list {margin:0 0 8px 18px; color:#0f172a;}
+.specialist {font-weight:600; color:#0f172a}
+</style>
+""",
+        unsafe_allow_html=True,
+)
+
+def _render_tips_card(title, dos, donts, when_to_consult, specialists):
+        dos_html = "".join([f"<li>{d}</li>" for d in dos])
+        donts_html = "".join([f"<li>{d}</li>" for d in donts])
+        when_html = "".join([f"<li>{w}</li>" for w in when_to_consult])
+        specs_html = "".join([f"<div><span class=\"specialist\">• {s}</span></div>" for s in specialists])
+
+        html = f"""
+        <div class="glass">
+            <div class="tips-title">{title} — Healthy Tips & Suggestions</div>
+            <div style="display:flex; gap:20px; flex-wrap:wrap;">
+                <div style="flex:1; min-width:220px;">
+                    <div style="font-weight:600;">Do's</div>
+                    <ul class="tips-list">{dos_html}</ul>
+                </div>
+                <div style="flex:1; min-width:220px;">
+                    <div style="font-weight:600;">Don'ts</div>
+                    <ul class="tips-list">{donts_html}</ul>
+                </div>
+                <div style="flex:1; min-width:220px;">
+                    <div style="font-weight:600;">When to consult a doctor</div>
+                    <ul class="tips-list">{when_html}</ul>
+                </div>
+            </div>
+            <div style="margin-top:10px;">
+                <div style="font-weight:600;">Recommended specialists</div>
+                <div style="margin-top:6px;">{specs_html}</div>
+            </div>
+        </div>
+        """
+        st.markdown(html, unsafe_allow_html=True)
+
+
+def _render_motivational_quote(disease, positive):
+    quotes = {
+        "Kidney": {
+            True: "Keep going — small lifestyle steps can make a big difference for kidney health.",
+            False: "Great news! Continue healthy habits to protect your kidneys for the long term."
+        },
+        "Liver": {
+            True: "This is a chance to reset; the liver is resilient and responds well to healthier choices.",
+            False: "Well done — maintaining balance now can keep your liver strong into the future."
+        },
+        "Parkinsons": {
+            True: "Focus on steady progress — consistent exercise and support matter more than perfection.",
+            False: "You are on the right path; keep building strength, balance, and confidence."
+        }
+    }
+    st.info(f"💬 {quotes[disease][positive]}")
+
+
+def _render_outcome_guidance(disease, positive, dos, donts, specialists):
+    title = f"{disease} {'Support Plan' if positive else 'Wellness Advice'}"
+    status_text = (
+        "You have a higher risk and should follow these steps closely." if positive else
+        "Your result is lower risk. Keep up the healthy habits below."
+    )
+    intro_html = f"<p style=\"margin-bottom:10px; font-size:15px;\">{status_text}</p>"
+    dos_html = "".join([f"<li>{d}</li>" for d in dos])
+    donts_html = "".join([f"<li>{d}</li>" for d in donts])
+    specs_html = "".join([f"<div><span class=\"specialist\">• {s}</span></div>" for s in specialists])
+    html = f"""
+    <div class="glass">
+        <div class="tips-title">{title}</div>
+        {intro_html}
+        <div style="display:flex; gap:20px; flex-wrap:wrap;">
+            <div style="flex:1; min-width:220px;">
+                <div style="font-weight:600;">Do's</div>
+                <ul class="tips-list">{dos_html}</ul>
+            </div>
+            <div style="flex:1; min-width:220px;">
+                <div style="font-weight:600;">Don'ts</div>
+                <ul class="tips-list">{donts_html}</ul>
+            </div>
+        </div>
+        <div style="margin-top:10px;">
+            <div style="font-weight:600;">Recommended specialists</div>
+            <div style="margin-top:6px;">{specs_html}</div>
+        </div>
+    </div>
+    """
+    st.markdown(html, unsafe_allow_html=True)
 
 
 # Sidebar for navigation
@@ -20,7 +128,7 @@ choice = st.sidebar.selectbox(
 
 if choice == "📄 Overview":
     st.markdown(
-    '<h1 style="color:#1ac6ff; font-family:Arial; text-align:center;">💊 Multiple Disease Prediction</h1>',
+    '<h1 style="color:#0ea5e9; font-family:Arial; text-align:center;">💊 Multiple Disease Prediction</h1>',
     unsafe_allow_html=True
     )
 
@@ -107,16 +215,41 @@ if choice == "📄 Overview":
 
 
     # Disclaimer
+    # Quick healthy tips summary (Overview)
+    _render_tips_card(
+        "Kidney Health",
+        dos=["Stay well hydrated but avoid excessive fluids if advised by doctor", "Control blood pressure and blood sugar", "Maintain a balanced low-salt diet", "Get regular urine and kidney function tests if at risk"],
+        donts=["Avoid long-term use of NSAIDs without medical advice", "Don't ignore persistent swelling or reduced urine output"],
+        when_to_consult=["Sudden decrease in urine output", "Unexplained swelling in legs/face", "Consistently abnormal kidney function tests"],
+        specialists=["Nephrologist", "Urologist", "Renal Dietitian"]
+    )
+
+    _render_tips_card(
+        "Liver Health",
+        dos=["Limit alcohol intake and maintain healthy weight", "Get vaccinated for Hepatitis A and B if not immune", "Avoid unnecessary herbal or OTC hepatotoxic drugs", "Eat a balanced diet and exercise regularly"],
+        donts=["Do not mix alcohol with medications that affect the liver", "Avoid unregulated supplements of unknown origin"],
+        when_to_consult=["Yellowing of skin/eyes (jaundice)", "Persistent abdominal pain or unexplained weight loss", "Very dark urine or pale stools"],
+        specialists=["Hepatologist", "Gastroenterologist", "Clinical Nutritionist"]
+    )
+
+    _render_tips_card(
+        "Parkinson's Awareness",
+        dos=["Stay active with regular exercise and balance training", "Prioritize good sleep and mental health support", "Follow medication schedules and report side effects"],
+        donts=["Don't ignore new or worsening tremors, stiffness, or balance problems", "Avoid activities with high fall risk without assessment"],
+        when_to_consult=["New or progressive tremor/stiffness", "Difficulty walking or frequent falls", "Speech/swallowing problems"],
+        specialists=["Neurologist (Movement Disorders)", "Physiotherapist", "Occupational Therapist"]
+    )
+
     st.warning("⚠️ Disclaimer: This app is for educational/demo purposes only, not for medical diagnosis.")
 
     # Footer / credits
     st.markdown("---")
     st.markdown("""
         <div style="text-align: center;">
-            <p style="font-size: 18px;">⚕️<span style="color:#FF5733;">Multiple Disease Prediction</span> | Built by <strong>Infant Joshva</strong></p>
-            <a href="https://github.com/Infant-Joshva" target="_blank" style="text-decoration: none; margin: 0 10px;">🐙 GitHub</a>
-            <a href="https://www.linkedin.com/in/infant-joshva" target="_blank" style="text-decoration: none; margin: 0 10px;">🔗 LinkedIn</a>
-            <a href="mailto:infantjoshva2024@gmail.com" style="text-decoration: none; margin: 0 10px;">📩 Contact</a>
+            <p style="font-size: 18px;">⚕️<span style="color:#FF5733;">Multiple Disease Prediction</span> | Built by <strong>Sudhamrita</strong></p>
+            <a href="https://github.com/x-wineytulips" target="_blank" style="text-decoration: none; margin: 0 10px;">🐙 GitHub</a>
+            <a href="https://www.linkedin.com/in/sudhamrita-dey-06455a327/" target="_blank" style="text-decoration: none; margin: 0 10px;">🔗 LinkedIn</a>
+            <a href="mailto:sudhamritadey1709@gmail.com" style="text-decoration: none; margin: 0 10px;">📩 Contact</a>
         </div>
     """, unsafe_allow_html=True)
 
@@ -124,7 +257,7 @@ if choice == "📄 Overview":
 
 elif choice == "🩸 Kidney Disease":
     st.markdown(
-    '<h1 style="color:#ff944d; font-family:Arial; text-align:center;">🩺 Kidney Disease Prediction</h1>',
+    '<h1 style="color:#0ea5e9; font-family:Arial; text-align:center;">🩺 Kidney Disease Prediction</h1>',
     unsafe_allow_html=True
     )
     st.markdown("<hr>", unsafe_allow_html=True)
@@ -206,10 +339,18 @@ elif choice == "🩸 Kidney Disease":
         </div>
         """
         st.markdown(progress_html, unsafe_allow_html=True)
+        _render_motivational_quote("Kidney", pred_class == "ckd")
+        _render_outcome_guidance(
+            "Kidney",
+            pred_class == "ckd",
+            dos=["Maintain blood pressure within target range", "Reduce dietary salt and processed foods", "Stay hydrated and monitor urine output", "Follow up with regular renal function tests"],
+            donts=["Avoid unnecessary NSAIDs and nephrotoxic drugs", "Don't delay evaluation for persistent swelling or fatigue"],
+            specialists=["Nephrologist", "Renal Dietitian"]
+        )
 
 elif choice == "🧬 Liver Disease":
     st.markdown(
-    '<h1 style="color:#ff944d; font-family:Arial; text-align:center;">🧪 Liver Disease Prediction</h1>',
+    '<h1 style="color:#0ea5e9; font-family:Arial; text-align:center;">🧪 Liver Disease Prediction</h1>',
     unsafe_allow_html=True
     )
 
@@ -284,11 +425,19 @@ elif choice == "🧬 Liver Disease":
         </div>
         """
         st.markdown(progress_html, unsafe_allow_html=True)
+        _render_motivational_quote("Liver", pred_class == "Yes")
+        _render_outcome_guidance(
+            "Liver",
+            pred_class == "Yes",
+            dos=["Limit alcohol intake", "Maintain a healthy weight and stay active", "Monitor medication effects with your doctor"],
+            donts=["Avoid unverified supplements and herbal remedies", "Don't skip routine liver function monitoring"],
+            specialists=["Hepatologist", "Gastroenterologist"]
+        )
 
 
 elif choice == "🧩 Parkinsons Disease":
     st.markdown(
-    '<h1 style="color:#ff944d; font-family:Arial; text-align:center;">🧠 Parkinsons Disease Prediction</h1>',
+    '<h1 style="color:#0ea5e9; font-family:Arial; text-align:center;">🧠 Parkinsons Disease Prediction</h1>',
     unsafe_allow_html=True
     )
 
@@ -374,3 +523,11 @@ elif choice == "🧩 Parkinsons Disease":
         </div>
         """
         st.markdown(progress_html, unsafe_allow_html=True)
+        _render_motivational_quote("Parkinsons", pred_class == "Yes")
+        _render_outcome_guidance(
+            "Parkinsons",
+            pred_class == "Yes",
+            dos=["Keep moving with regular balance and strength exercises", "Practice stress-reducing routines and good sleep habits", "Follow your neurologist's treatment plan closely"],
+            donts=["Don't avoid physical therapy if it is recommended", "Avoid high-fall-risk activities without support"],
+            specialists=["Neurologist (Movement Disorders)", "Physiotherapist", "Occupational Therapist"]
+        )
