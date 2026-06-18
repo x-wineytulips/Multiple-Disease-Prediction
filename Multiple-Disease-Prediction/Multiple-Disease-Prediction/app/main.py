@@ -2,36 +2,307 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import joblib
-import imblearn
+import os
 
 # model loading
-model1 = joblib.load("A:\Project\Multiple-Disease-Prediction\Multiple-Disease-Prediction\models\kidney.pkl")
-model2 = joblib.load("A:\Project\Multiple-Disease-Prediction\Multiple-Disease-Prediction\models\liver_model.pkl")
-model3 = joblib.load("A:\Project\Multiple-Disease-Prediction\Multiple-Disease-Prediction\models\parkinsons.pkl") 
+model1 = joblib.load(r"A:\MultipleDiseasePrediction\Multiple-Disease-Prediction\models\kidney.pkl")
+model2 = joblib.load(r"A:\MultipleDiseasePrediction\Multiple-Disease-Prediction\models\liver_model.pkl")
+model3 = joblib.load(r"A:\MultipleDiseasePrediction\Multiple-Disease-Prediction\models\parkinsons.pkl")
 
 # --- Page Config ---
-st.set_page_config(page_title="Multiple Disease Prediction",page_icon="🏥")
+st.set_page_config(page_title="Dharman",page_icon="⚕️")
 
 # --- Glassmorphism CSS + helper functions ---
 st.markdown(
 """
 <style>
-/* Background gradient for subtle depth */
-html, body {background: linear-gradient(180deg, #d1d5db 0%, #9ca3af 100%); color: #0f172a;} 
-.glass {
-    background: rgba(255,255,255,0.85);
-    color: #0f172a;
-    backdrop-filter: blur(10px) saturate(130%);
-    -webkit-backdrop-filter: blur(10px) saturate(130%);
-    border-radius: 14px;
-    border: 1px solid rgba(191, 219, 254, 0.55);
-    box-shadow: 0 14px 40px rgba(15, 23, 42, 0.08);
-    padding: 16px;
+
+.stApp{
+
+background:
+radial-gradient(circle at top left,#1e3a8a22,transparent 40%),
+radial-gradient(circle at top right,#7c3aed22,transparent 35%),
+#050816;
+
+color:#E5E7EB;
+
 }
-.card-grid {display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 12px;}
-.tips-title {font-size:18px; font-weight:700; margin-bottom:6px; color: #0ea5e9;}
-.tips-list {margin:0 0 8px 18px; color:#0f172a;}
-.specialist {font-weight:600; color:#0f172a}
+
+/* MAIN CONTENT */
+
+.block-container{
+
+max-width:1300px;
+
+padding-top:2rem;
+
+padding-left:5rem;
+
+padding-right:5rem;
+
+}
+
+
+/* SIDEBAR */
+
+section[data-testid="stSidebar"]{
+
+background:
+
+rgba(17,24,39,.65);
+
+backdrop-filter:
+
+blur(24px);
+
+border-right:
+
+1px solid rgba(255,255,255,.08);
+
+}
+
+section[data-testid="stSidebar"] *{
+
+color:#E5E7EB;
+
+}
+
+
+/* GLASS CARD */
+
+.glass{
+
+background:
+
+rgba(17,24,39,.55);
+
+backdrop-filter:
+
+blur(24px);
+
+-webkit-backdrop-filter:
+
+blur(24px);
+
+border:
+
+1px solid rgba(255,255,255,.08);
+
+border-radius:
+
+28px;
+
+padding:
+
+28px;
+
+box-shadow:
+
+0 10px 40px rgba(0,0,0,.35);
+
+margin-bottom:
+
+25px;
+
+transition:
+
+all .25s ease;
+
+}
+
+.glass:hover{
+
+transform:
+
+translateY(-3px);
+
+box-shadow:
+
+0 20px 50px rgba(59,130,246,.15);
+
+}
+
+
+/* TITLES */
+
+h1{
+
+font-size:48px !important;
+
+font-weight:800 !important;
+
+color:#F8FAFC;
+
+}
+
+h2{
+
+font-size:34px !important;
+
+color:#F8FAFC;
+
+}
+
+h3{
+
+font-size:26px !important;
+
+color:#E2E8F0;
+
+}
+
+
+/* TEXT */
+
+p,li,label{
+
+font-size:16px;
+
+line-height:1.8;
+
+color:#CBD5E1;
+
+}
+
+
+/* CARD TITLE */
+
+.tips-title{
+
+font-size:22px;
+
+font-weight:700;
+
+background:
+
+linear-gradient(
+90deg,
+#60A5FA,
+#A78BFA
+);
+
+-webkit-background-clip:text;
+
+-webkit-text-fill-color:transparent;
+
+margin-bottom:20px;
+
+}
+
+
+/* INPUTS */
+
+.stTextInput input,
+.stNumberInput input{
+
+background:
+
+rgba(17,24,39,.8);
+
+border:
+
+1px solid rgba(255,255,255,.1);
+
+border-radius:
+
+15px;
+
+color:white;
+
+padding:10px;
+
+}
+
+
+/* SELECT BOX */
+
+.stSelectbox div[data-baseweb="select"]{
+
+background:
+
+rgba(17,24,39,.8);
+
+border-radius:
+
+15px;
+
+}
+
+
+/* BUTTON */
+
+.stButton button{
+
+background:
+
+linear-gradient(
+135deg,
+#3B82F6,
+#6366F1
+);
+
+border:none;
+
+color:white;
+
+font-weight:700;
+
+padding:
+
+12px 30px;
+
+border-radius:
+
+16px;
+
+box-shadow:
+
+0 10px 25px rgba(59,130,246,.25);
+
+transition:
+
+all .25s ease;
+
+}
+
+.stButton button:hover{
+
+transform:
+
+translateY(-2px);
+
+box-shadow:
+
+0 15px 35px rgba(99,102,241,.35);
+
+}
+
+
+/* EXPANDER */
+
+.streamlit-expanderHeader{
+
+background:
+
+rgba(17,24,39,.55);
+
+border-radius:
+
+18px;
+
+}
+
+
+/* WARNING BOX */
+
+.stAlert{
+
+border-radius:
+
+18px;
+
+}
+
 </style>
 """,
         unsafe_allow_html=True,
@@ -123,12 +394,12 @@ def _render_outcome_guidance(disease, positive, dos, donts, specialists):
 # Sidebar for navigation
 choice = st.sidebar.selectbox(
     "Choose Disease Prediction", 
-    ["📄 Overview", "🩸 Kidney Disease", "🧬 Liver Disease", "🧩 Parkinsons Disease"]
+    ["📄 Dashboard", "🩸 Kidney Disease", "🧬 Liver Disease", "🧩 Parkinsons Disease"]
 )
 
 if choice == "📄 Overview":
     st.markdown(
-    '<h1 style="color:#0ea5e9; font-family:Arial; text-align:center;">💊 Multiple Disease Prediction</h1>',
+    '<h1 style="color:#0ea5e9; font-family:Arial; text-align:center;">💊 Dharman- The Multiple Disease Prediction</h1>',
     unsafe_allow_html=True
     )
 
@@ -138,9 +409,12 @@ if choice == "📄 Overview":
     st.markdown("<hr>", unsafe_allow_html=True)
 
     # Short intro
-    st.header("Overview")
+    st.header("Dharman Dashboard")
     st.write(
         """
+        Dharman is inspired from the Sanskrit Language, which embodies the ideas of care, responsibility, and the preservation of well-being. The name represents compassion guided by knowledge, where medicine meets wisdom.
+
+
         This application demonstrates the use of **Machine Learning models** in the 
         healthcare domain for predicting the likelihood of certain diseases based on 
         patient medical reports.  
@@ -246,7 +520,7 @@ if choice == "📄 Overview":
     st.markdown("---")
     st.markdown("""
         <div style="text-align: center;">
-            <p style="font-size: 18px;">⚕️<span style="color:#FF5733;">Multiple Disease Prediction</span> | Built by <strong>Sudhamrita</strong></p>
+            <p style="font-size: 18px;">⚕️<span style="color:#FF5733;">Dharman - Multiple Disease Prediction</span> | Built by <strong>Sudhamrita</strong></p>
             <a href="https://github.com/x-wineytulips" target="_blank" style="text-decoration: none; margin: 0 10px;">🐙 GitHub</a>
             <a href="https://www.linkedin.com/in/sudhamrita-dey-06455a327/" target="_blank" style="text-decoration: none; margin: 0 10px;">🔗 LinkedIn</a>
             <a href="mailto:sudhamritadey1709@gmail.com" style="text-decoration: none; margin: 0 10px;">📩 Contact</a>
@@ -402,7 +676,7 @@ elif choice == "🧬 Liver Disease":
         class_labels = model2.classes_
 
         st.markdown("""---""")
-        st.subheader("🎯 Prediction Result")
+        st.subheader("Prediction Result")
         st.write(f"**Predicted Result:** {pred_class}")
 
         if pred_class == "Yes":
